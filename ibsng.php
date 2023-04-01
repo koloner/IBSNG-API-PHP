@@ -191,8 +191,16 @@ class IBSng
     {
         return $this->_up_Charge_User($username,$Charge);
     }
-
-
+    /**
+     * Clean Reports
+     * @param string $log connection_logs , credit_changes , user_audit_logs , snapshots , web_analyzer
+     * @param int $time Hours , Days , Months , Years
+     * @param string $time_value
+     */
+    public function clean_report(string $log,int $time,string $time_value = 'Days'){
+        $log2 = str_replace(['connection_logs' , 'credit_changes' , 'user_audit_logs' , 'snapshots' , 'web_analyzer'],['connection_log' , 'credit_change' , 'user_audit_log' , 'snapshots' , 'web_analyzer'],$log);
+        return $this->_clean_report($log,$log2,$time,$time_value);
+    }
     protected function login()
     {
         $action = 'IBSng/admin/';
@@ -203,47 +211,6 @@ class IBSng
             return ['result'=>true];
         }else{
             return ['result'=>false];
-        }
-    }
-
-    protected function getPassword($username, $uid = null)
-    {
-        if ($uid == null) {
-            $uid = $this->isUsername($username);
-        }
-
-        $action = 'IBSng/admin/plugins/edit.php';
-        $postData['user_id'] = $uid;
-        $postData['edit_user'] = 1;
-        $postData['attr_edit_checkbox_2'] = 'normal_username';
-
-        $output = $this->request($action, $postData);
-
-        $phrase = '<td class="Form_Content_Row_Right_light">	<input type=text id="password" name="password" value="';
-        $pos1 = strpos($output, $phrase);
-        $leftover = str_replace($phrase, '', substr($output, $pos1, strlen($phrase) + 1000));
-        $password = substr($leftover, 0, strpos($leftover, '"'));
-        if (isset($password)) {
-            return trim($password);
-        } else {
-            return ['result'=>false];
-        }
-    }
-    private function isUsername($username)
-    {
-        $action = 'IBSng/admin/user/user_info.php?normal_username_multi=' . $username;
-        $output = $this->request($action);
-
-        if (strpos($output, 'does not exists') == true) {
-            return false;
-        } else {
-            $pattern1 = 'change_credit.php?user_id=';
-            $pos1 = strpos($output, $pattern1);
-            $sub1 = substr($output, $pos1 + strlen($pattern1), 100);
-            $pattern2 = '"';
-            $pos2 = strpos($sub1, $pattern2);
-            $sub2 = substr($sub1, 0, $pos2);
-            return $sub2;
         }
     }
 
@@ -301,6 +268,17 @@ class IBSng
         $post_data['has_normal_charge'] = 't';
         $post_data['normal_charge'] = $Charge;
         $output = $this->request($action, $post_data, true);
+        return ['result'=>true];
+    }
+
+    protected function _clean_report($log,$log2,$time, $time_value)
+    {
+        $action = 'IBSng/admin/report/clean_reports.php';
+        
+        $post_data['delete_'.$log] = 'user';
+        $post_data[$log.'_date'] = $time;
+        $post_data[$log.'_unit'] = $time_value;
+        $output = $this->request($action, $post_data, false);
         return ['result'=>true];
     }
 
@@ -604,6 +582,47 @@ class IBSng
         }
         curl_close($this->handler);
         return $output;
+    }
+
+    protected function getPassword($username, $uid = null)
+    {
+        if ($uid == null) {
+            $uid = $this->isUsername($username);
+        }
+
+        $action = 'IBSng/admin/plugins/edit.php';
+        $postData['user_id'] = $uid;
+        $postData['edit_user'] = 1;
+        $postData['attr_edit_checkbox_2'] = 'normal_username';
+
+        $output = $this->request($action, $postData);
+
+        $phrase = '<td class="Form_Content_Row_Right_light">	<input type=text id="password" name="password" value="';
+        $pos1 = strpos($output, $phrase);
+        $leftover = str_replace($phrase, '', substr($output, $pos1, strlen($phrase) + 1000));
+        $password = substr($leftover, 0, strpos($leftover, '"'));
+        if (isset($password)) {
+            return trim($password);
+        } else {
+            return ['result'=>false];
+        }
+    }
+    private function isUsername($username)
+    {
+        $action = 'IBSng/admin/user/user_info.php?normal_username_multi=' . $username;
+        $output = $this->request($action);
+
+        if (strpos($output, 'does not exists') == true) {
+            return false;
+        } else {
+            $pattern1 = 'change_credit.php?user_id=';
+            $pos1 = strpos($output, $pattern1);
+            $sub1 = substr($output, $pos1 + strlen($pattern1), 100);
+            $pattern2 = '"';
+            $pos2 = strpos($sub1, $pattern2);
+            $sub2 = substr($sub1, 0, $pos2);
+            return $sub2;
+        }
     }
 
     private function cr8_uid($group_name, $credit)
