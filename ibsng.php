@@ -276,8 +276,8 @@ class IBSng
         $action = 'IBSng/admin/report/clean_reports.php';
         
         $post_data['delete_'.$log] = 'user';
-        $post_data[$log.'_date'] = $time;
-        $post_data[$log.'_unit'] = $time_value;
+        $post_data[$log2.'_date'] = $time;
+        $post_data[$log2.'_unit'] = $time_value;
         $output = $this->request($action, $post_data, false);
         return ['result'=>true];
     }
@@ -336,7 +336,7 @@ class IBSng
         } else {
             $locked = '1';
         }
-
+        
         $classname = 'Form_Content_Row_Right_userinfo_light';
         $nodes = $finder->query("//*[contains(@class, '$classname')]");
         if($uid){
