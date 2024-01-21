@@ -3,9 +3,9 @@
 /**
  * Example Connect
  * $login = [
- * 'username' => 'admin',
- * 'password' => '123456',
- *		'hostname' => 'ibs.netxping.com',
+ * 'username' => 'user',
+ * 'password' => 'pass',
+ *	'hostname' => 'ip_sng',
  *	];
  *	$ibsng =  new IBSng($login);
  */
@@ -24,6 +24,7 @@ class IBSng
     /**
      * @param boolean $autoConnect
      */
+    
     public function setAutoConnect($autoConnect)
     {
         $this->autoConnect = $autoConnect;
@@ -35,6 +36,7 @@ class IBSng
         /*
          * Curl library existence
          */
+
         if (!extension_loaded('curl')) {
             throw new \Exception ("You need to load/activate the curl extension.");
         }
@@ -42,6 +44,7 @@ class IBSng
         /*
          * Hide LibXML parse errors
          */
+
         libxml_use_internal_errors(true);
 
 
@@ -67,14 +70,17 @@ class IBSng
         /**
          * If Auto Connect True
          */
+
         if ($this->autoConnect) {
             $this->connect();
         }
 
     }
+
     /**
      * Check Url And  Port
      */
+
     protected function hostNameHealth($hostname = false, $port = false)
     {
         if ($hostname == false) {
@@ -90,6 +96,7 @@ class IBSng
     /**
      * Get Cookie
      */
+
     protected function getCookie()
     {
         return $this->cookiePathName;
@@ -98,6 +105,7 @@ class IBSng
     /**
      * Connect
      */
+
     public function connect()
     {
         if ($this->isConnected()) {
@@ -107,18 +115,22 @@ class IBSng
         /*
         * Login
         */
+
         if(!$this->login()){
             return ['result'=>false,'error'=>"Can't login to IBSng. Wrong username or password"];
         }
+
         /*
          * set connection as valid
          */
+
         return $this->isConnected = true;
     }
 
     /**
      * Disconnect
      */
+
     public function disconnect()
     {
         if ($this->handler) {
@@ -130,6 +142,7 @@ class IBSng
     /**
      * Check Connected
      */
+
     public function isConnected()
     {
         return $this->isConnected;
@@ -142,6 +155,7 @@ class IBSng
      * @param string $group
      * @param int $credit
      */
+
     public function addUser(string $username = null,string $password = null,string $group = null,int $credit = null)
     {
         return $this->_addUser($group, $username, $password, $credit);
@@ -154,6 +168,7 @@ class IBSng
      * @param string $username
      * @param boolean $uid
      */
+
     public function deleteUser($username,$uid=false)
     {
         return $this->_delUser($username,$uid);
@@ -165,6 +180,7 @@ class IBSng
      * @param boolean $withpassword
      * @param boolean $uid
      */
+
     public function getUser($username,$withpassword = true,$uid=false)
     {
         return $this->infoByUsername($username, $withpassword,$uid);
@@ -176,6 +192,7 @@ class IBSng
      * @param int $c
      * @param string $type Days , Months , Years
      */
+
     public function up_date_User(string $username,int $c,string $type='Days')
     {
         return $this->_up_date_User($username,$c, $type);
@@ -191,16 +208,27 @@ class IBSng
     {
         return $this->_up_Charge_User($username,$Charge);
     }
+
+    /**
+     * Add Charge And Group By RAS name
+     * @param strng $ras
+     */
+    public function add_charge_group($ras,$ip,$day=31){
+        return $this->_add_charge_group($ras,$ip,$day);
+    }
     /**
      * Clean Reports
      * @param string $log connection_logs , credit_changes , user_audit_logs , snapshots , web_analyzer
      * @param int $time Hours , Days , Months , Years
      * @param string $time_value
      */
+
     public function clean_report(string $log,int $time,string $time_value = 'Days'){
         $log2 = str_replace(['connection_logs' , 'credit_changes' , 'user_audit_logs' , 'snapshots' , 'web_analyzer'],['connection_log' , 'credit_change' , 'user_audit_log' , 'snapshots' , 'web_analyzer'],$log);
         return $this->_clean_report($log,$log2,$time,$time_value);
     }
+
+
     protected function login()
     {
         $action = 'IBSng/admin/';
@@ -252,6 +280,73 @@ class IBSng
         $post_data['rel_exp_date'] = $new;
         $post_data['rel_exp_date_unit'] = $type;
         $output = $this->request($action, $post_data, true);
+        return ['result'=>true];
+    }
+
+    protected function _add_charge_group($ras,$ip,$day)
+    {
+        $ip1 = str_replace('.','!',$ip);
+        $ip1 = $ip1.'_ALL_'; 
+        $post_data = null;
+        $action = 'IBSng/admin/charge/add_new_charge.php';
+        $post_data['charge_name'] = $ras;
+        $post_data['charge_type'] = 'Internet';
+        $post_data['visible_to_all'] = 1;
+        $post_data['comment'] = '';
+        $post_data['x'] = 32;
+        $post_data['y'] = 14;
+        $out = $this->request($action, $post_data,true);
+        $post_data = null;
+        $action = 'IBSng/admin/charge/add_internet_charge_rule.php?charge_name='.$ras;
+        $post_data['charge_name'] = $ras;
+        $post_data['charge_name'] = $ras;
+        $post_data['charge_rule_id'] = 'N/A';
+        $post_data['rule_start'] = '00:00:00';
+        $post_data['charge_name'] = $ras;
+        $post_data['rule_end'] = '23:59:59';
+        $post_data['cpm'] = 0;
+        $post_data['charge_name'] = $ras;
+        $post_data['cpk'] = 0;
+        $post_data['assumed_kps'] = '99999999';
+        $post_data['charge_name'] = $ras;
+        $post_data['bandwidth_limit_kbytes'] = '0';
+        $post_data['tx_leaf_name'] = '';
+        $post_data['rx_leaf_name'] = '';
+        $post_data['checkall'] = 1;
+        $post_data['Monday'] = 1;
+        $post_data['Tuesday'] = 1;
+        $post_data['Wednesday'] = 1;
+        $post_data['Thursday'] = 1;
+        $post_data['Friday'] = 1;
+        $post_data['Saturday'] = 1;
+        $post_data['Sunday'] = 1;
+        $post_data['ras'] = $ip;
+        $post_data[$ip1] = 1;
+        $post_data['x'] = 19;
+        $post_data['y'] = 9;
+        $out = $this->request($action, $post_data);
+        $post_data = null;
+        $action = 'IBSng/admin/group/add_new_group.php';
+        $post_data['group_name'] = $ras;
+        $post_data['comment'] = '';
+        $post_data['x'] = 14;
+        $post_data['y'] = 13;
+        $out= $this->request($action, $post_data);
+        $post_data = null;
+        $action = 'IBSng/admin/plugins/edit.php';
+        $post_data['target'] = 'group';
+        $post_data['target_id'] = $ras;
+        $post_data['edit_tpl_cs'] = 'normal_charge,rel_exp_date';
+        $post_data['tab1_selected'] = 'Exp_Dates';
+        $post_data['attr_update_method_0'] = 'normalCharge';
+        $post_data['has_normal_charge'] = 't';
+        $post_data['normal_charge'] = $ras;
+        $post_data['attr_update_method_1'] = 'relExpDate';
+        $post_data['has_rel_exp'] = 't';
+        $post_data['rel_exp_date'] = $day;
+        $post_data['rel_exp_date_unit'] = 'Days';
+        $post_data['update'] = '1';
+        $out= $this->request($action, $post_data);
         return ['result'=>true];
     }
 
